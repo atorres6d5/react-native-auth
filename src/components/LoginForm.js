@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import firebase from 'firebase'
-import { Button, Card, CardSection, Input } from "./common"
+import { Button, Card, CardSection, Input , Spinner} from "./common"
 
 export default class LoginForm extends Component {
   constructor(props){
@@ -16,7 +16,8 @@ export default class LoginForm extends Component {
     this.state = {
       email:"",
       pass:"",
-      err:""
+      err:"",
+      loading:false
     }
   }
 
@@ -24,17 +25,52 @@ export default class LoginForm extends Component {
     const { email, pass } = this.state
     console.log(this.state.email, this.state.pass, "look here");
 
+    this.setState({ err:"", loading: true })
+
     firebase.auth().signInWithEmailAndPassword(email, pass)
+    .then(this.onLoginSuccess)
     .catch(()=>{
       firebase.auth().createUserWithEmailAndPassword(email, pass)
+      .then(this.onLoginSuccess)
       .catch((err)=>{
         console.log("didnot work", err);
-        this.setState({err:"Auth Failed"})
+        this.onLoginFail()
       })
     })
   }
 
+  onLoginSuccess = () =>{
+    this.setState({
+      email:"",
+      pass:"",
+      loading:false,
+      err:""
+    })
+  }
+
+  onLoginFail =( ) => {
+    this.setState({ err: "Auth Failed", loading:false})
+  }
+
+
+  renderButton =()=>{
+    if(this.state.loading){
+      return(
+        <Spinner size={"small"} />
+      )
+    }
+    return(
+      <Button onPress={this.onButtonPress}>
+       Log in
+     </Button>
+    )
+  }
+
+
+
   render() {
+
+
 
     return (
       <Card>
@@ -63,9 +99,7 @@ export default class LoginForm extends Component {
           {this.state.err}
         </Text>
         <CardSection>
-          <Button onPress={this.onButtonPress}>
-            Log in
-          </Button>
+          {this.renderButton()}
         </CardSection>
       </Card>
     );
